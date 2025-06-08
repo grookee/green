@@ -1,0 +1,109 @@
+version: '3.8'
+
+services:
+  green_elixir:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - "4000:4000"
+      - "13381:13381"
+    environment:
+      - MIX_ENV=prod
+      - DATABASE_URL=postgresql://green:${DB_PASSWORD}@db:5432/green_elixir_prod
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      - OBSERVATORY_URL=http://observatory:5000
+      - OBSERVATORY_API_KEY=${OBSERVATORY_API_KEY}
+      - PHX_HOST=${DOMAIN}
+      - SSL_KEY_PATH=/app/ssl/private.key
+      - SSL_CERT_PATH=/app/ssl/certificate.crt
+    volumes:
+      - ./ssl:/app/ssl:ro
+      - uploads:/app/uploads
+    depends_on:
+      - db
+      - redis
+      - observatory
+    restart: unless-stopped
+    networks:
+      - green_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=green_elixir_prod
+      - POSTGRES_USER=green
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - green_network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - green_network
+
+  observatory:
+    image: sunrisecommunity/observatory:latest
+    environment:
+      - API_KEY=${OBSERVATORY_API_KEY}
+      - DATABASE_URL=postgresql://observatory:${OBSERVATORY_DB_PASSWORD}@observatory_db:5432/observatory
+    depends_on:
+      - observatory_db
+    restart: unless-stopped
+    networks:
+      - green_network
+
+  observatory_db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=observatory
+      - POSTGRES_USER=observatory
+      - POSTGRES_PASSWORD=${OBSERVATORY_DB_PASSWORD}
+    volumes:
+      - observatory_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - green_network
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - green_elixir
+    restart: unless-stopped
+    networks:
+      - green_network
+
+volumes:
+  postgres_data:
+  observatory_postgres_data:
+  redis_data:
+  uploads:
+
+
+networks:
+  green_network:
+    driver: bridge

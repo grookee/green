@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  green_elixir:
+    build: .
+    ports:
+      - "4000:4000"
+      - "13381:13381"
+    environment:
+      - DATABASE_URL=postgresql://green:password@db:5432/green_elixir
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      - OBSERVATORY_URL=http://observatory:5000
+    depends_on:
+      - db
+      - redis
+      - observatory
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: green
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: green_elixir
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - green_network
+  redis:
+    image: redis:7-alpine
+    networks:
+      - green_network
+  observatory:
+    image: observatory:latest
+    ports:
+      - "5000:5000"
+    networks:
+      - green_network
+
+volumes:
+  postgres_data:
+
+
+networks:
+  green_network:
+    driver: bridge
