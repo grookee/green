@@ -1,4 +1,4 @@
-defmodule SunriseElixir.Cache.BeatmapCache do
+defmodule GreenElixir.Cache.BeatmapCache do
   @moduledoc """
   Caching layer for beatmap data to reduce Observatory API calls.
   """

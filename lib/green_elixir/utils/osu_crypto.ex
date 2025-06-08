@@ -1,4 +1,4 @@
-defmodule SunriseElixir.Utils.OsuCrypto do
+defmodule GreenElixir.Utils.OsuCrypto do
   @moduledoc """
   Cryptographic functions for osu! client communication.
   Handles Rijndael decryption and client validation.
