@@ -97,3 +97,5 @@ oban/
 # Other sensitive or generated files
 uploads/
 tmp/
+
+Observatory/

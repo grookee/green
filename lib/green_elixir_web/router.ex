@@ -1,44 +1,54 @@
 defmodule GreenElixirWeb.Router do
+  alias GreenElixirWeb.ScoreController
+  alias Hex.API.User
+  alias Credo.Execution.Task.UseColors
   use GreenElixirWeb, :router
 
-  pipeline :browser do
-    plug :accepts, ["html"]
-    plug :fetch_session
-    plug :fetch_live_flash
-    plug :put_root_layout, html: {GreenElixirWeb.Layouts, :root}
-    plug :protect_from_forgery
+  pipeline :api do
+    plug :accepts, ["json", "html", "text"]
     plug :put_secure_browser_headers
   end
 
-  pipeline :api do
-    plug :accepts, ["json"]
+  pipeline :osu_client do
+    plug :accepts, ["html", "text"]
+    plug GreenElixirWeb.Plugs.OsuAuth
   end
 
-  scope "/", GreenElixirWeb do
-    pipe_through :browser
+  scope "/web", GreenElixirWeb do
+    pipe_through :osu_client
 
-    get "/", PageController, :home
+    post "/osu-submit-modular-selector.php", ScoreController, :submit_score
+    post "/osu-getscores.php", ScoreController, :get_scores
+    get "/osu-getreplay.php", ScoreController, :get_replay
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", GreenElixirWeb do
-  #   pipe_through :api
-  # end
+  scope "/api/v1", GreenElixirWeb do
+    pipe_through :api
 
-  # Enable LiveDashboard and Swoosh mailbox preview in development
-  if Application.compile_env(:green_elixir, :dev_routes) do
-    # If you want to use the LiveDashboard in production, you should put
-    # it behind authentication and allow only admins to access it.
-    # If your application does not have an admins-only section yet,
-    # you can use Plug.BasicAuth to set up some basic authentication
-    # as long as you are also using SSL (which you should anyway).
-    import Phoenix.LiveDashboard.Router
+    resources "/users", UserController, only: [:show, :index]
+    get "/users/:id/scores", UserController, :scores
+    get "/users/:id/stats", UserController, :stats
 
-    scope "/dev" do
-      pipe_through :browser
+    get "/beatmaps/:id/scores", LeaderboardController, :beatmap_scores
+    get "/rankings/:mode", LeaderboardController, :global_rankings
 
-      live_dashboard "/dashboard", metrics: GreenElixirWeb.Telemetry
-      forward "/mailbox", Plug.Swoosh.MailboxPreview
-    end
+    resources "/beatmaps", BeatmapController, only: [:show, :index]
+    get "/beatmapsets/:id", BeatmapController, :beatmapset
   end
+
+  scope "/admin", GreenElixirWeb.Admin do
+    pipe_through [:api, :admin_auth]
+
+    resources "/users", UserController
+    resources "/scores", ScoreController
+    get "/stats", DashboardController, :stats
+  end
+
+  scope "/socket" do
+    pipe_through :api
+
+    get "/websocket", GreenElixirWeb.UserSocket, :websocket
+  end
+
+  get "/health", GreenElixirWeb.HealthController, :check
 end

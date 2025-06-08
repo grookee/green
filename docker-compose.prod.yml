@@ -24,7 +24,6 @@ services:
     depends_on:
       - db
       - redis
-      - observatory
     restart: unless-stopped
     networks:
       - green_network
@@ -56,29 +55,6 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
-    restart: unless-stopped
-    networks:
-      - green_network
-
-  observatory:
-    image: sunrisecommunity/observatory:latest
-    environment:
-      - API_KEY=${OBSERVATORY_API_KEY}
-      - DATABASE_URL=postgresql://observatory:${OBSERVATORY_DB_PASSWORD}@observatory_db:5432/observatory
-    depends_on:
-      - observatory_db
-    restart: unless-stopped
-    networks:
-      - green_network
-
-  observatory_db:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_DB=observatory
-      - POSTGRES_USER=observatory
-      - POSTGRES_PASSWORD=${OBSERVATORY_DB_PASSWORD}
-    volumes:
-      - observatory_postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
     networks:
       - green_network

@@ -1,6 +1,4 @@
 defmodule GreenElixir.Application do
-  # See https://hexdocs.pm/elixir/Application.html
-  # for more information on OTP Applications
   @moduledoc false
 
   use Application
@@ -8,15 +6,18 @@ defmodule GreenElixir.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      GreenElixirWeb.Telemetry,
+      # Start the Ecto repository
       GreenElixir.Repo,
-      {DNSCluster, query: Application.get_env(:green_elixir, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: GreenElixir.PubSub},
-      # Start the Finch HTTP client for sending emails
-      {Finch, name: GreenElixir.Finch},
-      # Start a worker by calling: GreenElixir.Worker.start_link(arg)
-      # {GreenElixir.Worker, arg},
-      # Start to serve requests, typically the last entry
+      {Redix, name: :redix},
+      {Cachex, name: :green_cache},
+      {Registry, keys: :unique, name: GreenElixir.SessionRegistry},
+      {Registry, keys: :unique, name: GreenElixir.MatchRegistry},
+      {Oban, Application.fetch_env!(:green_elixir, Oban)},
+
+      # Start the Telemetry supervisor
+      GreenElixirWeb.Telemetry,
+      # Start the Endpoint (http/https)
       GreenElixirWeb.Endpoint
     ]
 
@@ -26,8 +27,6 @@ defmodule GreenElixir.Application do
     Supervisor.start_link(children, opts)
   end
 
-  # Tell Phoenix to update the endpoint configuration
-  # whenever the application is updated.
   @impl true
   def config_change(changed, _new, removed) do
     GreenElixirWeb.Endpoint.config_change(changed, removed)
