@@ -1,28 +1,43 @@
 defmodule GreenElixir.Application do
-  @moduledoc false
-
+  @moduledoc """
+  The GreenElixir Application.
+  """
   use Application
 
   @impl true
   def start(_type, _args) do
     children = [
-      # Start the Ecto repository
+      # Database
       GreenElixir.Repo,
+
+      # PubSub
       {Phoenix.PubSub, name: GreenElixir.PubSub},
+
+      # Cache
       {Redix, name: :redix},
-      {Cachex, name: :green_cache},
+      {Cachex, name: :Green_cache},
+
+      # Registry for sessions and matches
       {Registry, keys: :unique, name: GreenElixir.SessionRegistry},
       {Registry, keys: :unique, name: GreenElixir.MatchRegistry},
-      {Oban, Application.fetch_env!(:green_elixir, Oban)},
 
-      # Start the Telemetry supervisor
-      GreenElixirWeb.Telemetry,
-      # Start the Endpoint (http/https)
-      GreenElixirWeb.Endpoint
+      # Core services
+      GreenElixir.Services.SessionManager,
+      GreenElixir.Services.BanchoServer,
+      GreenElixir.Services.MultiplayerManager,
+      GreenElixir.Services.ChatManager,
+      GreenElixir.Services.BeatmapManager,
+
+      # Background Jobs
+      {Oban, Application.fetch_env!(:Green_elixir, Oban)},
+
+      # Web endpoints
+      GreenElixirWeb.Endpoint,
+
+      # Telemetry
+      GreenElixirWeb.Telemetry
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
     opts = [strategy: :one_for_one, name: GreenElixir.Supervisor]
     Supervisor.start_link(children, opts)
   end
