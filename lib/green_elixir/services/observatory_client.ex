@@ -34,7 +34,7 @@ defmodule GreenElixir.Services.ObservatoryClient do
 
   @impl true
   def init(opts) do
-    config = Application.get_env(:Green_elixir, :observatory, [])
+    config = Application.get_env(:green_elixir, :observatory, [])
 
     state = %__MODULE__{
       base_url: Keyword.get(config, :url, "http://localhost:5000"),
@@ -129,8 +129,8 @@ defmodule GreenElixir.Services.ObservatoryClient do
     url = "#{state.base_url}/api/health"
 
     case make_request(:get, url, "", [], state) do
-      {:ok, %Response{status_code: 200}} -> :ok
-      {:ok, %Response{status_code: status}} -> {:error, "HTTP #{status}"}
+      {:ok, %{status_code: 200}} -> :ok
+      {:ok, %{status_code: status}} -> {:error, "HTTP #{status}"}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -146,21 +146,21 @@ defmodule GreenElixir.Services.ObservatoryClient do
       end
 
     case make_request(:get, url, "", [], state, params: params) do
-      {:ok, %Response{status_code: 200, body: body}} ->
+      {:ok, %{status_code: 200, body: body}} ->
         case Jason.decode(body) do
           {:ok, data} -> process_beatmap_set_response(data)
           {:error, _} -> {:error, :invalid_json}
         end
 
-      {:ok, %Response{status_code: 404}} ->
+      {:ok, %{status_code: 404}} ->
         {:error, :beatmap_not_found}
 
-      {:ok, %Response{status_code: 429}} ->
+      {:ok, %{status_code: 429}} ->
         # Rate limited, retry after delay
         :timer.sleep(1000)
         fetch_beatmap_set(state, beatmap_hash, beatmap_id, retries - 1)
 
-      {:ok, %Response{status_code: status}} ->
+      {:ok, %{status_code: status}} ->
         {:error, "HTTP #{status}"}
 
       {:error, %HTTPoison.Error{reason: :timeout}} ->
@@ -182,16 +182,16 @@ defmodule GreenElixir.Services.ObservatoryClient do
     params = [{"mods", mods}]
 
     case make_request(:get, url, "", [], state, params: params) do
-      {:ok, %Response{status_code: 200, body: body}} ->
+      {:ok, %{status_code: 200, body: body}} ->
         case Jason.decode(body) do
           {:ok, data} -> {:ok, process_difficulty_response(data)}
           {:error, _} -> {:error, :invalid_json}
         end
 
-      {:ok, %Response{status_code: 404}} ->
+      {:ok, %{status_code: 404}} ->
         {:error, :beatmap_not_found}
 
-      {:ok, %Response{status_code: status}} ->
+      {:ok, %{status_code: status}} ->
         {:error, "HTTP #{status}"}
 
       {:error, reason} ->
@@ -208,13 +208,13 @@ defmodule GreenElixir.Services.ObservatoryClient do
     ]
 
     case make_request(:get, url, "", [], state, params: params) do
-      {:ok, %Response{status_code: 200, body: body}} ->
+      {:ok, %{status_code: 200, body: body}} ->
         case Jason.decode(body) do
           {:ok, data} -> {:ok, data}
           {:error, _} -> {:error, :invalid_json}
         end
 
-      {:ok, %Response{status_code: status}} ->
+      {:ok, %{status_code: status}} ->
         {:error, "HTTP #{status}"}
 
       {:error, reason} ->
@@ -226,16 +226,16 @@ defmodule GreenElixir.Services.ObservatoryClient do
     url = "#{state.base_url}/api/beatmap/#{beatmap_id}/status"
 
     case make_request(:get, url, "", [], state) do
-      {:ok, %Response{status_code: 200, body: body}} ->
+      {:ok, %{status_code: 200, body: body}} ->
         case Jason.decode(body) do
           {:ok, data} -> {:ok, data}
           {:error, _} -> {:error, :invalid_json}
         end
 
-      {:ok, %Response{status_code: 404}} ->
+      {:ok, %{status_code: 404}} ->
         {:error, :beatmap_not_found}
 
-      {:ok, %Response{status_code: status}} ->
+      {:ok, %{status_code: status}} ->
         {:error, "HTTP #{status}"}
 
       {:error, reason} ->

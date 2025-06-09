@@ -94,7 +94,7 @@ defmodule GreenElixir.Services.PerformanceCalculator do
     # Hard Rock
     {aim_diff, speed_diff, od} =
       if has_mod?(mods, :hard_rock) do
-        {aim_diff * 1.4, speed_diff * 1.4, :math.min(od * 1.4, 10.0)}
+        {aim_diff * 1.4, speed_diff * 1.4, min(od * 1.4, 10.0)}
       else
         {aim_diff, speed_diff, od}
       end
@@ -138,10 +138,10 @@ defmodule GreenElixir.Services.PerformanceCalculator do
 
   defp calculate_aim_value(aim_difficulty, accuracy, miss_count, max_combo, beatmap_max_combo) do
     # Base aim value
-    aim_value = :math.pow(5.0 * :math.max(1.0, aim_difficulty / 0.0675) - 4.0, 3.0) / 100_000.0
+    aim_value = :math.pow(5.0 * max(1.0, aim_difficulty / 0.0675) - 4.0, 3.0) / 100_000.0
 
     # Length bonus
-    length_bonus = 0.95 + 0.4 * :math.min(1.0, max_combo / 3000.0)
+    length_bonus = 0.95 + 0.4 * min(1.0, max_combo / 3000.0)
 
     length_bonus =
       length_bonus +
@@ -167,7 +167,7 @@ defmodule GreenElixir.Services.PerformanceCalculator do
     if beatmap_max_combo > 0 do
       aim_value =
         aim_value *
-          :math.min(
+          min(
             :math.pow(max_combo, 0.8) / :math.pow(beatmap_max_combo, 0.8),
             1.0
           )
@@ -179,7 +179,7 @@ defmodule GreenElixir.Services.PerformanceCalculator do
 
   defp calculate_speed_value(speed_difficulty, accuracy, miss_count) do
     speed_value =
-      :math.pow(5.0 * :math.max(1.0, speed_difficulty / 0.0675) - 4.0, 3.0) / 100_000.0
+      :math.pow(5.0 * max(1.0, speed_difficulty / 0.0675) - 4.0, 3.0) / 100_000.0
 
     # Miss penalty
     if miss_count > 0 do
@@ -207,7 +207,7 @@ defmodule GreenElixir.Services.PerformanceCalculator do
       :math.pow(1.52163, overall_difficulty) * :math.pow(better_accuracy_percentage, 24.0) * 2.83
 
     # Bonus for high accuracy
-    :math.min(1.15, :math.pow(acc_value / 27000.0, 1.2)) * acc_value
+    min(1.15, :math.pow(acc_value / 27000.0, 1.2)) * acc_value
   end
 
   defp get_final_multiplier(mods) do

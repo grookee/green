@@ -45,6 +45,7 @@ defmodule GreenElixir.MixProject do
       {:ranch, "~> 2.1"},
       {:gun, "~> 2.0"},
       {:websock_adapter, "~> 0.5"},
+      {:httpoison, "~> 1.8"},
 
       # Caching & Performance
       {:redix, "~> 1.3"},
@@ -71,7 +72,6 @@ defmodule GreenElixir.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.3", only: [:dev], runtime: false},
       {:excoveralls, "~> 0.16", only: :test},
-
       {:gettext, "~> 0.24"},
       {:swoosh, "~> 1.3"},
       {:esbuild, "~> 0.7", runtime: Mix.env() == :dev},
