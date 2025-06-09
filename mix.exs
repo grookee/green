@@ -37,7 +37,7 @@ defmodule GreenElixir.MixProject do
       {:postgrex, "~> 0.17"},
 
       # Authentication & Security
-      {:bcrypt_elixir, "~> 3.0"},
+      {:argon2_elixir, "~> 4.1.3"},
       {:guardian, "~> 2.3"},
       {:plug_crypto, "~> 1.2"},
 

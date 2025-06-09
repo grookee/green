@@ -60,18 +60,18 @@ defmodule GreenElixirWeb.Router do
     get "/beatmapsets/:id", BeatmapController, :beatmapset
   end
 
-  # pipeline :admin_auth do
-  #   plug GreenElixirWeb.Plugs.AdminAuth
-  # end
+  pipeline :admin_auth do
+    plug GreenElixirWeb.Plugs.AdminAuth
+  end
 
-  # # Admin endpoints
-  # scope "/admin", GreenElixirWeb.Admin do
-  #   pipe_through [:api, :admin_auth]
+  # Admin endpoints
+  scope "/admin", GreenElixirWeb.Admin do
+    pipe_through [:api, :admin_auth]
 
-  #   resources "/users", UserController
-  #   resources "/scores", ScoreController
-  #   get "/stats", DashboardController, :stats
-  # end
+    resources "/users", UserController
+    resources "/scores", ScoreController
+    get "/stats", DashboardController, :stats
+  end
 
   # WebSocket for real-time features
   scope "/socket" do

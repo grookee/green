@@ -58,7 +58,7 @@ defmodule GreenElixir.Services.BanchoServer do
     # Wait for login
     receive do
       {:tcp, ^socket, data} ->
-        case handle_login(data) do
+        case handle_login(socket, data) do
           {:ok, session_token} ->
             client_loop(socket, session_token)
 
@@ -79,7 +79,7 @@ defmodule GreenElixir.Services.BanchoServer do
     end
   end
 
-  defp handle_login(data) do
+  defp handle_login(socket, data) do
     # Parse login data (username, password hash, client info)
     lines = String.split(data, "\n", trim: true)
 
@@ -91,13 +91,13 @@ defmodule GreenElixir.Services.BanchoServer do
           {:ok, token} = SessionManager.create_session(user.id, user.username, self())
 
           # Send login response packets
-          send_login_success(user)
+          send_login_success(socket, user)
 
           {:ok, token}
 
-        {:error, _reason} ->
-          send_login_failure()
-          {:error, :invalid_credentials}
+        {:error, reason} ->
+          send_login_failure(socket)
+          {:error, reason}
       end
     else
       {:error, :invalid_login_format}
@@ -142,8 +142,11 @@ defmodule GreenElixir.Services.BanchoServer do
         handle_packet(packet, session_token)
         handle_packets_recursive(rest, session_token)
 
-      :error ->
-        Logger.warning("Failed to decode packet")
+      {:error, reason} ->
+        Logger.warning("Failed to decode packet: #{inspect(reason)}")
+
+      other ->
+        Logger.warning("Failed to decode packet: #{inspect(other)}")
     end
   end
 
@@ -175,18 +178,24 @@ defmodule GreenElixir.Services.BanchoServer do
     :ok
   end
 
-  defp send_login_success(user) do
+  defp send_login_success(socket, user) do
     # Send user ID
     user_id_packet = Protocol.encode_packet(:server_user_id, user.id)
-    :gen_tcp.send(self(), user_id_packet)
+    :gen_tcp.send(socket, user_id_packet)
 
     # Send other login success packets
     # (privileges, friends list, etc.)
   end
 
-  defp send_login_failure do
-    error_packet = Protocol.encode_packet(:server_command_error, "Invalid credentials")
-    :gen_tcp.send(self(), error_packet)
+  defp send_login_failure(socket) do
+    error_packet =
+      Protocol.encode_packet(:server_send_message, %{
+        sender: "BanchoBot",
+        target: "#error",
+        message: "Login failed: Invalid credentials"
+      })
+
+    :gen_tcp.send(socket, error_packet)
   end
 
   defp broadcast_user_stats(session, action_data) do

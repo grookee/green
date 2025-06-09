@@ -64,13 +64,25 @@ defmodule GreenElixir.Services.BeatmapService do
   defp calculate_difficulty_with_mods(beatmap_id, mods) do
     # Implement difficulty calculation with mods
     # This would typically call a difficulty calculator service
-    {:ok,
-     %{
-       aim_difficulty: 5.0,
-       speed_difficulty: 5.0,
-       overall_difficulty: 8.0,
-       max_combo: 1000
-     }}
+    # Check if we can calculate difficulty for this beatmap
+    if beatmap_exists?(beatmap_id) do
+      {:ok,
+       %{
+         aim_difficulty: 5.0,
+         speed_difficulty: 5.0,
+         overall_difficulty: 8.0,
+         max_combo: 1000
+       }}
+    else
+      {:error, :beatmap_not_found}
+    end
+  end
+
+  # Helper function to check if beatmap exists
+  defp beatmap_exists?(beatmap_id) when is_integer(beatmap_id) or is_binary(beatmap_id) do
+    # Replace with actual implementation that checks if the beatmap exists
+    # For now, assume all beatmaps exist
+    true
   end
 
   defp cache_beatmap_data(beatmap_data) do

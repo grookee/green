@@ -143,4 +143,42 @@ defmodule GreenElixir.Services.SessionManager do
   defp generate_token do
     :crypto.strong_rand_bytes(32) |> Base.encode64()
   end
+
+  def authenticate_by_credentials(username, password_hash) do
+    case Accounts.authenticate_user(username, password_hash) do
+      {:ok, user} ->
+        session = %{
+          user_id: user.id,
+          username: user.username,
+          privileges: user.privileges || 1
+        }
+
+        {:ok, session}
+
+      {:error, _reason} ->
+        {:error, :invalid_credentials}
+    end
+  end
+
+  def get_user_session(user_id) do
+    case :ets.match(:user_sessions, {user_id, :"$1"}) do
+      [[token]] ->
+        get_session(token)
+
+      [] ->
+        {:error, :not_found}
+    end
+  end
+
+  def send_to_user(user_id, packet_type, data) do
+    case get_user_session(user_id) do
+      {:ok, session} ->
+        packet = Protocol.encode_packet(packet_type, data)
+        send(session.socket, {:send_data, packet})
+        :ok
+
+      {:error, _} ->
+        {:error, :user_not_online}
+    end
+  end
 end

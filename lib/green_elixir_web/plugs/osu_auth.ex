@@ -45,7 +45,7 @@ defmodule GreenElixirWeb.Plugs.OsuAuth do
          "iv" => iv,
          "osuver" => osu_version
        }) do
-    case GreenElixir.Utils.OsuCrypto.decode_score_data(score_encoded, iv, osu_version) do
+    case GreenElixir.Utils.OsuCrypto.decrypt_score_data(score_encoded, iv, osu_version) do
       {:ok, decrypted} ->
         case String.split(decrypted, "|") do
           [_hash, username | _] -> {:ok, username}

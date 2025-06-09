@@ -8,9 +8,10 @@ defmodule GreenElixir.Accounts.User do
   schema "users" do
     field :username, :string
     field :email, :string
-    field :passhash, :string
+    field :password_hash, :string
     field :description, :string
     field :country, :integer, default: 0
+    field :registration_ip, :string
     # UserPrivilege enum
     field :privilege, :integer, default: 1
     field :register_date, :utc_datetime
@@ -30,8 +31,8 @@ defmodule GreenElixir.Accounts.User do
 
   def registration_changeset(user, attrs) do
     user
-    |> cast(attrs, [:username, :email, :passhash, :country])
-    |> validate_required([:username, :email, :passhash])
+    |> cast(attrs, [:username, :email, :password_hash, :registration_ip])
+    |> validate_required([:username, :email, :password_hash, :registration_ip])
     |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/)
     |> validate_length(:username, min: 2, max: 15)
     |> unique_constraint(:username)
